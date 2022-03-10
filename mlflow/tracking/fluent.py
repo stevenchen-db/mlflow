@@ -8,6 +8,8 @@ import atexit
 import time
 import logging
 import inspect
+import tempfile
+import shutil
 from copy import deepcopy
 from packaging.version import Version
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
@@ -47,6 +49,7 @@ from mlflow.utils.mlflow_tags import (
     MLFLOW_DATABRICKS_JOB_TYPE_INFO,
 )
 from mlflow.utils.validation import _validate_run_id
+from mlflow.utils.requirements_utils import _run_command
 
 if TYPE_CHECKING:
     import pandas  # pylint: disable=unused-import
@@ -1651,3 +1654,24 @@ def autolog(
             raise
         else:
             _logger.warning("Exception raised while enabling autologging for spark: %s", str(e))
+
+
+def upload_wheel(pip_requirements):
+    import sys
+
+    set_experiment("/Shared/ModelWheels")
+    with tempfile.TemporaryDirectory() as tmp_dir_path:
+        reqs = "\n".join(pip_requirements)
+        req_path = os.path.join(tmp_dir_path, "requirements.txt")
+        wheels_path = os.path.join(tmp_dir_path, "wheels")
+        with open(req_path, "w") as f:
+            f.write(reqs)
+        _run_command(
+            [sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheels_path, "-r", req_path]
+        )
+        wheels_zip = os.path.join(tmp_dir_path, "wheels.zip")
+        shutil.make_archive(wheels_path, root_dir=wheels_path, format="zip")
+        with start_run() as run:
+            log_artifact(wheels_zip)
+            run_id = run.info.run_id
+            print(run_id)
