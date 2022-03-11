@@ -1661,7 +1661,7 @@ def upload_wheel(pip_requirements, extra_index_url=None, find_links=None):
 
     experiment_name = "/Shared/ModelWheels"
     set_experiment(experiment_name)
-    experiment_id = get_experiment_by_name(experiment_name).experiment_id()
+    experiment_id = get_experiment_by_name(experiment_name).experiment_id
     with tempfile.TemporaryDirectory() as tmp_dir_path:
         reqs = "\n".join(pip_requirements)
         req_path = os.path.join(tmp_dir_path, "requirements.txt")
