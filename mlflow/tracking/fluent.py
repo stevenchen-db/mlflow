@@ -1656,7 +1656,7 @@ def autolog(
             _logger.warning("Exception raised while enabling autologging for spark: %s", str(e))
 
 
-def upload_wheel(pip_requirements):
+def upload_wheel(pip_requirements, extra_index_url=None, find_links=None):
     import sys
 
     set_experiment("/Shared/ModelWheels")
@@ -1666,9 +1666,15 @@ def upload_wheel(pip_requirements):
         wheels_path = os.path.join(tmp_dir_path, "wheels")
         with open(req_path, "w") as f:
             f.write(reqs)
-        _run_command(
-            [sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheels_path, "-r", req_path]
-        )
+
+        cmd = [sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheels_path, "-r", req_path]
+        if extra_index_url:
+            cmd.extend(("--extra-index-url", extra_index_url))
+        if find_links:
+            cmd.extend(("--find-links", find_links))
+
+        _run_command(cmd)
+
         wheels_zip = os.path.join(tmp_dir_path, "wheels.zip")
         shutil.make_archive(wheels_path, root_dir=wheels_path, format="zip")
         with start_run() as run:
