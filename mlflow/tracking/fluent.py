@@ -585,6 +585,9 @@ def set_tags(tags: Dict[str, Any]) -> None:
     tags_arr = [RunTag(key, str(value)) for key, value in tags.items()]
     MlflowClient().log_batch(run_id=run_id, metrics=[], params=[], tags=tags_arr)
 
+def set_wheel(runId: str, experimentId: str, uri: str) -> None:
+
+    pass
 
 def log_artifact(local_path: str, artifact_path: Optional[str] = None) -> None:
     """
@@ -1626,34 +1629,3 @@ def autolog(
             _logger.warning("Exception raised while enabling autologging for spark: %s", str(e))
 
 
-def upload_wheel(pip_requirements, extra_index_url=None, find_links=None):
-    import sys
-
-    experiment_name = "/Shared/ModelWheels"
-    set_experiment(experiment_name)
-    experiment_id = get_experiment_by_name(experiment_name).experiment_id()
-    with tempfile.TemporaryDirectory() as tmp_dir_path:
-        reqs = "\n".join(pip_requirements)
-        req_path = os.path.join(tmp_dir_path, "requirements.txt")
-        wheels_path = os.path.join(tmp_dir_path, "wheels")
-        with open(req_path, "w") as f:
-            f.write(reqs)
-
-        cmd = [sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheels_path, "-r", req_path]
-        if extra_index_url:
-            cmd.extend(("--extra-index-url", extra_index_url))
-        if find_links:
-            cmd.extend(("--find-links", find_links))
-
-        _run_command(cmd)
-
-        wheels_zip = os.path.join(tmp_dir_path, "wheels.zip")
-        shutil.make_archive(wheels_path, root_dir=wheels_path, format="zip")
-        with start_run() as run:
-            log_artifact(wheels_zip)
-            run_id = run.info.run_id
-            artifact_uri = get_artifact_uri()
-            print(run_id)
-            print(experiment_id)
-            print(artifact_uri)
-            # call API and provide pip_requirements, experiment_id, run_id, artifact_uri

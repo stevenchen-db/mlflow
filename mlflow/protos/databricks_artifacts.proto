@@ -14,6 +14,28 @@ option (scalapb.options) = {
 
 service DatabricksMlflowArtifactsService {
 
+  rpc getWheelUri (GetWheelUri) returns (GetWheelUri.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "GET",
+        path: "/mlflow/wheels/get-wheel-uri"
+        since {major: 2, minor: 0},
+      }],
+      visibility: PUBLIC_UNDOCUMENTED,
+    };
+  }
+
+  rpc setWheelUri (SetWheelUri) returns (SetWheelUri.Response) {
+    option (rpc) = {
+      endpoints: [{
+        method: "PUT",
+        path: "/mlflow/wheels/set-wheel-uri"
+        since {major: 2, minor: 0},
+      }],
+      visibility: PUBLIC_UNDOCUMENTED,
+    };
+  }
+
   // Fetch credentials to read from the specified MLflow artifact location
   //
   // Note: Even if no artifacts exist at the specified artifact location, this API will
@@ -148,3 +170,37 @@ message GetCredentialsForWrite {
 
   }
 }
+
+message GetWheelUri {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+  option (scalapb.message).extends = "com.databricks.mlflow.api.ModelServingV2Message";
+  optional string requirements = 1;
+  message Response {
+    optional Wheel wheel = 1;
+  }
+}
+
+enum WheelStatus {
+  WHEEL_STATUS_PENDING = 0;
+  WHEEL_STATUS_READY = 1;
+  WHEEL_STATUS_FAILED = 2;
+}
+
+message SetWheelUri {
+  option (scalapb.message).extends = "com.databricks.rpc.RPC[$this.Response]";
+  option (scalapb.message).extends = "com.databricks.mlflow.api.ModelServingV2Message";
+  optional string requirements = 1;
+  optional string wheel_status = 2;
+  optional string run_id = 3;
+  optional string experiment_id = 4;
+  optional string path = 5;
+
+  message Response {}
+}
+
+message Wheel {
+  optional string wheelStatus = 1;
+  optional string wheelStatusMessage = 2;
+  optional string wheelUri = 3;
+}
+

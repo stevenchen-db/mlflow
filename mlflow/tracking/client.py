@@ -917,6 +917,9 @@ class MlflowClient:
         """
         self._tracking_client.log_batch(run_id, metrics, params, tags)
 
+    def create_or_update_wheel(self, run_id, experiment_id, path) -> None:
+        self._tracking_client.create_or_update_wheel(run_id, experiment_id, path)
+
     def log_artifact(self, run_id, local_path, artifact_path=None) -> None:
         """
         Write a local file or directory to the remote ``artifact_uri``.

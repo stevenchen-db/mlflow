@@ -254,6 +254,7 @@ def call_endpoint(host_creds, endpoint, method, json_body, response_proto):
             host_creds=host_creds, endpoint=endpoint, method=method, json=json_body
         )
     response = verify_rest_response(response, endpoint)
+    print(response, response.text)
     js_dict = json.loads(response.text)
     parse_dict(js_dict=js_dict, message=response_proto)
     return response_proto

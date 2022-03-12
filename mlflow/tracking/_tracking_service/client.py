@@ -354,6 +354,9 @@ class TrackingServiceClient:
         else:
             artifact_repo.log_artifact(local_path, artifact_path)
 
+    def create_or_update_wheel(self, run_id, experiment_id, path) -> None:
+        pass
+
     def log_artifacts(self, run_id, local_dir, artifact_path=None):
         """
         Write a directory of files to the remote ``artifact_uri``.

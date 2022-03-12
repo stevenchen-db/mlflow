@@ -2,12 +2,16 @@ import os
 import logging
 import subprocess
 import functools
+import tempfile
+import shutil
+
 
 from mlflow.exceptions import MlflowException
 from mlflow.utils.rest_utils import MlflowHostCreds
 from databricks_cli.configure import provider
 from mlflow.utils._spark_utils import _get_active_spark_session
 from mlflow.utils.uri import get_db_info_from_uri
+from mlflow.tracking._tracking_service import utils as tracking_utils
 
 _logger = logging.getLogger(__name__)
 
@@ -408,3 +412,64 @@ def get_databricks_host_creds(server_uri=None):
     elif config.token:
         return MlflowHostCreds(config.host, token=config.token, ignore_tls_verification=insecure)
     _fail_malformed_databricks_auth(profile)
+
+
+def _run_command(cmd):
+    """
+    Runs the specified command. If it exits with non-zero status, `MlflowException` is raised.
+    """
+    print(f'running command {" ".join(cmd)}')
+    proc = subprocess.Popen(cmd)
+    proc.communicate()
+    if proc.returncode != 0:
+        msg = "Encountered an unexpected error while building the wheel."
+        raise MlflowException(msg)
+
+
+
+
+def _create_or_update_wheel(pip_requirements, run_id, experiment_id, path):
+    from mlflow.utils.proto_json_utils import message_to_json
+    from mlflow.utils.rest_utils import call_endpoint
+    requirements = '\n'.join(pip_requirements)
+    from mlflow.protos.databricks_artifacts_pb2 import (
+        SetWheelUri
+    )
+    req_body = message_to_json(
+        SetWheelUri(requirements=requirements, run_id=run_id, experiment_id=experiment_id, path=path))
+    response = call_endpoint(get_databricks_host_creds(), "api/v2/mlflow/endpoints-v2/set-wheel-uri", "PUT", req_body, SetWheelUri.Response())
+    print('response', response)
+
+
+
+def build_and_upload_model_serving_wheel(pip_requirements, extra_index_url=None, find_links=None):
+    import sys
+    import mlflow
+    experiment_name = "/Shared/ModelWheels"
+    experiment = mlflow.get_experiment_by_name(experiment_name)
+    if experiment is None:
+        experiment_id = mlflow.create_experiment(experiment_name)
+    else:
+        experiment_id = experiment.experiment_id
+
+    with tempfile.TemporaryDirectory() as tmp_dir_path:
+        reqs = "\n".join(pip_requirements)
+        req_path = os.path.join(tmp_dir_path, "requirements.txt")
+        wheels_path = os.path.join(tmp_dir_path, "wheels")
+        with open(req_path, "w") as f:
+            f.write(reqs)
+        cmd = [sys.executable, "-m", "pip", "wheel", "--wheel-dir", wheels_path, "-r", req_path]
+        if extra_index_url:
+            cmd.extend(("--extra-index-url", extra_index_url))
+        if find_links:
+            cmd.extend(("--find-links", find_links))
+        _run_command(cmd)
+        wheels_zip = os.path.join(tmp_dir_path, "wheels.zip")
+        shutil.make_archive(wheels_path, root_dir=wheels_path, format="zip")
+        with mlflow.start_run(experiment_id=experiment_id) as run:
+            mlflow.log_artifact(wheels_zip)
+        run_id = run.info.run_id
+        _create_or_update_wheel(pip_requirements, run_id, experiment_id, "wheels.zip")
+
+
+

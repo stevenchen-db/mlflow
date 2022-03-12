@@ -155,7 +155,6 @@ delete_run = mlflow.tracking.fluent.delete_run
 register_model = mlflow.tracking._model_registry.fluent.register_model
 autolog = mlflow.tracking.fluent.autolog
 evaluate = mlflow.models.evaluate
-upload_wheel = mlflow.tracking.fluent.upload_wheel
 
 run = projects.run
 
