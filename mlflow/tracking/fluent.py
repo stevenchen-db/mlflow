@@ -1628,4 +1628,3 @@ def autolog(
         else:
             _logger.warning("Exception raised while enabling autologging for spark: %s", str(e))
 
-
