@@ -191,9 +191,9 @@ message SetWheelUri {
   option (scalapb.message).extends = "com.databricks.mlflow.api.ModelServingV2Message";
   optional string requirements = 1;
   optional string wheel_status = 2;
-  optional string run_id = 3;
+  optional string wheel_id = 3;
   optional string experiment_id = 4;
-  optional string path = 5;
+  optional string wheel_uri = 5;
 
   message Response {}
 }

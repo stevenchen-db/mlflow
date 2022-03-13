@@ -439,7 +439,7 @@ def _create_or_update_wheel(pip_requirements, run_id, experiment_id, path):
     )
     response = call_endpoint(
         get_databricks_host_creds(),
-        "/api/v2/mlflow/endpoints-v2/set-wheel-uri",
+        "/mlflow/endpoints-v2/set-wheel-uri",
         "PUT",
         req_body,
         SetWheelUri.Response(),
