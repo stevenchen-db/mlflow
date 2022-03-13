@@ -434,12 +434,12 @@ def _create_or_update_wheel(pip_requirements, run_id, experiment_id, path):
 
     req_body = message_to_json(
         SetWheelUri(
-            requirements=requirements, run_id=run_id, experiment_id=experiment_id, path=path
+            requirements=requirements, wheel_id=run_id, experiment_id=experiment_id, wheel_uri=path
         )
     )
     response = call_endpoint(
         get_databricks_host_creds(),
-        "/mlflow/endpoints-v2/set-wheel-uri",
+        "/api/2.0/mlflow/endpoints-v2/set-wheel-uri",
         "PUT",
         req_body,
         SetWheelUri.Response(),
