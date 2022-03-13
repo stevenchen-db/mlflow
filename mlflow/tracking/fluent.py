@@ -8,8 +8,6 @@ import atexit
 import time
 import logging
 import inspect
-import tempfile
-import shutil
 from copy import deepcopy
 from packaging.version import Version
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
@@ -39,7 +37,6 @@ from mlflow.utils.mlflow_tags import (
     MLFLOW_RUN_NAME,
 )
 from mlflow.utils.validation import _validate_run_id
-from mlflow.utils.requirements_utils import _run_command
 
 if TYPE_CHECKING:
     import pandas  # pylint: disable=unused-import
@@ -585,9 +582,6 @@ def set_tags(tags: Dict[str, Any]) -> None:
     tags_arr = [RunTag(key, str(value)) for key, value in tags.items()]
     MlflowClient().log_batch(run_id=run_id, metrics=[], params=[], tags=tags_arr)
 
-def set_wheel(runId: str, experimentId: str, uri: str) -> None:
-
-    pass
 
 def log_artifact(local_path: str, artifact_path: Optional[str] = None) -> None:
     """
@@ -1627,4 +1621,3 @@ def autolog(
             raise
         else:
             _logger.warning("Exception raised while enabling autologging for spark: %s", str(e))
-

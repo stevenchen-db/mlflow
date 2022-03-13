@@ -11,7 +11,6 @@ from mlflow.utils.rest_utils import MlflowHostCreds
 from databricks_cli.configure import provider
 from mlflow.utils._spark_utils import _get_active_spark_session
 from mlflow.utils.uri import get_db_info_from_uri
-from mlflow.tracking._tracking_service import utils as tracking_utils
 
 _logger = logging.getLogger(__name__)
 
@@ -426,25 +425,32 @@ def _run_command(cmd):
         raise MlflowException(msg)
 
 
-
-
 def _create_or_update_wheel(pip_requirements, run_id, experiment_id, path):
     from mlflow.utils.proto_json_utils import message_to_json
     from mlflow.utils.rest_utils import call_endpoint
-    requirements = '\n'.join(pip_requirements)
-    from mlflow.protos.databricks_artifacts_pb2 import (
-        SetWheelUri
-    )
-    req_body = message_to_json(
-        SetWheelUri(requirements=requirements, run_id=run_id, experiment_id=experiment_id, path=path))
-    response = call_endpoint(get_databricks_host_creds(), "api/v2/mlflow/endpoints-v2/set-wheel-uri", "PUT", req_body, SetWheelUri.Response())
-    print('response', response)
 
+    requirements = "\n".join(pip_requirements)
+    from mlflow.protos.databricks_artifacts_pb2 import SetWheelUri
+
+    req_body = message_to_json(
+        SetWheelUri(
+            requirements=requirements, run_id=run_id, experiment_id=experiment_id, path=path
+        )
+    )
+    response = call_endpoint(
+        get_databricks_host_creds(),
+        "/api/v2/mlflow/endpoints-v2/set-wheel-uri",
+        "PUT",
+        req_body,
+        SetWheelUri.Response(),
+    )
+    print("response", response)
 
 
 def build_and_upload_model_serving_wheel(pip_requirements, extra_index_url=None, find_links=None):
     import sys
     import mlflow
+
     experiment_name = "/Shared/ModelWheels"
     experiment = mlflow.get_experiment_by_name(experiment_name)
     if experiment is None:
@@ -470,6 +476,3 @@ def build_and_upload_model_serving_wheel(pip_requirements, extra_index_url=None,
             mlflow.log_artifact(wheels_zip)
         run_id = run.info.run_id
         _create_or_update_wheel(pip_requirements, run_id, experiment_id, "wheels.zip")
-
-
-
